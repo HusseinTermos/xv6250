@@ -3,6 +3,14 @@
 #include "user.h"
 #include "fs.h"
 
+int count_stars(char* s) {
+  int count = 0, n = strlen(s);
+  for(int i = 0; i < n; ++i)
+    if(s[i] == '*')
+      count++;
+  return count;
+}
+
 char*
 fmtname(char *path)
 {
@@ -22,9 +30,134 @@ fmtname(char *path)
   return buf;
 }
 
-void
-ls(char *path)
+int match(char *pattern, char *s) { // Assumes no consecutive *'s
+  int m = strlen(pattern), n = strlen(s), stars = count_stars(pattern);
+  if(stars == 0) {
+    if(n != m) return 0;
+    for(int i = 0; i < n; i++)
+      if(pattern[i] != s[i]) return 0;
+    return 1;
+  }
+  if(m == 1) return 1; // pattern is '*'
+  // don't count empty string as a part
+  int num_parts = stars;
+  if(pattern[0] == '*') num_parts--;
+  if(pattern[m - 1] == '*') num_parts--;
+  char** parts = (char**)malloc(num_parts * sizeof(char *));
+  int* part_size = (int*)malloc(num_parts * sizeof(int));
+  int i = (pattern[0] == '*') ? 1 : 0, part_index = 0;
+  while(i < m) {
+    int j = i;
+    while(j < m && pattern[j] != '*') j++;
+    j--;
+    // s[i, j] is a part
+    parts[part_index] = (char*)malloc((j - i + 2) * sizeof(char));
+    parts[part_index][j - i + 1] = 0; // s[length] should be the null terminator
+    part_size[part_index] = j - i + 1;
+    for(int k = i; k <= j; ++k) parts[part_index][k - i] = pattern[k];
+    part_index++;
+    i = j + 2;
+  }
+  int p1 = 0, p2 = 0;
+  while(p1 < n && p2 < num_parts && p1 + part_size[p2] <= n) {
+    int fits = 1;
+    for(int j = 0; j < part_size[p2]; ++j)
+      if(s[p1 + j] != parts[p2][j]) {
+        fits = 0;
+        break;
+      }
+    if(fits) {
+      p1 += part_size[p2];
+      p2++;
+    }
+    else p1++;
+  }
+  // freeing up memory
+  for(int j = 0; j < num_parts; ++j) {
+    free(parts[j]);
+    parts[j] = NULL;
+  }
+  free(parts);
+  parts = NULL;
+  free(part_size);
+  part_size = NULL;
+  return p2 == num_parts;
+}
+
+void ls(char *path); // forward declaration
+
+// Recursive function
+void search(int idx, int n, char *curr_path, struct dirent* de, struct stat* st, char** parts) {
+  int fd;
+  if(idx == n) {
+    // Last part, call normal ls on matching files
+    ls(curr_path);
+    return;
+  }
+
+  if((fd = open(curr_path, 0)) < 0) return;
+  if(fstat(fd, st) < 0) { close(fd); return; }
+  if(st->type != T_DIR) { close(fd); return; }
+
+  char newbuf[512];
+  strcpy(newbuf, curr_path);
+  int len = strlen(newbuf);
+  if(len > 0 && newbuf[len-1] != '/') newbuf[len++] = '/';
+
+  while(read(fd, de, sizeof(*de)) == sizeof(*de)){
+    if(de->inum == 0) continue;
+    de->name[DIRSIZ] = 0; // ensure null terminated
+    if(!match(parts[idx], de->name)) continue;
+
+    strcpy(newbuf + len, de->name);
+    newbuf[len + strlen(de->name)] = 0;
+
+    search(idx+1, n, newbuf, de, st, parts);
+  }
+  close(fd);
+}
+
+void ls_wildcard(char *path)
 {
+  char buf[512], *p;
+  int num_parts = 1, path_length = strlen(path);
+  for(int i = 0; i < path_length; i++)
+    if(path[i] == '/')
+      num_parts++;
+  char** parts = (char**)malloc(num_parts * sizeof(char *));
+  int n = 0;
+  struct dirent* de = (struct dirent*)malloc(sizeof(struct dirent));
+  struct stat* st = (struct stat*)malloc(sizeof(struct stat));
+
+  // Split path into components
+  char *s = path;
+  while(*s) {
+    parts[n++] = s;
+    while(*s && *s != '/') s++;
+    if(*s) *s++ = 0; // null terminate each part
+  }
+
+  // Start recursion from first part
+  if(parts[0][0] == 0) return;
+  if(parts[0][0] == '/') search(0, n, "/", de, st, parts);
+  else search(0, n, ".", de, st, parts);
+  // free up memory
+  free(parts);
+  parts = NULL;
+  free(de);
+  de = NULL;
+  free(st);
+  st = NULL;
+}
+
+void ls(char *path)
+{
+  // Check if path contains '*'
+  if(count_stars(path)) {
+    ls_wildcard(path);
+    return;
+  }
+
   char buf[512], *p;
   int fd;
   struct dirent de;
@@ -70,8 +203,7 @@ ls(char *path)
   close(fd);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   int i;
 
