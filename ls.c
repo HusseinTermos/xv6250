@@ -59,6 +59,28 @@ int match(char *pattern, char *s) { // Assumes no consecutive *'s
     i = j + 2;
   }
   int p1 = 0, p2 = 0;
+  // match prefix
+  if(pattern[0] != '*') {
+    int len = strlen(parts[0]);
+    if(n < len) return 0;
+    for(int j = 0; j < len; ++j)   
+        if(s[j] != pattern[j]) return 0;
+    m -= len;
+    n -= len;
+    s += len;
+    pattern += len;
+    p2 = 1; // don't match that prefix part
+  }
+  // match suffix
+  if(pattern[m - 1] != '*') {
+    int len = strlen(parts[num_parts - 1]);
+    if(n < len) return 0;
+    for(int j = 0; j < len; j++)
+        if(s[n - 1 - j] != pattern[m - 1 - j]) return 0;
+    n -= len;
+    m -= len;
+    num_parts--; // don't match that suffix part
+  }
   while(p1 < n && p2 < num_parts && p1 + part_size[p2] <= n) {
     int fits = 1;
     for(int j = 0; j < part_size[p2]; ++j)
@@ -81,7 +103,7 @@ int match(char *pattern, char *s) { // Assumes no consecutive *'s
   parts = NULL;
   free(part_size);
   part_size = NULL;
-  return p2 == num_parts;
+  return p2 >= num_parts;
 }
 
 void ls(char *path); // forward declaration
@@ -106,11 +128,14 @@ void search(int idx, int n, char *curr_path, struct dirent* de, struct stat* st,
 
   while(read(fd, de, sizeof(*de)) == sizeof(*de)){
     if(de->inum == 0) continue;
-    de->name[DIRSIZ] = 0; // ensure null terminated
-    if(!match(parts[idx], de->name)) continue;
+    char namebuf[DIRSIZ + 1];
+    memmove(namebuf, de->name, DIRSIZ);
+    namebuf[DIRSIZ] = '\0';  // ensures it's null terminated
 
-    strcpy(newbuf + len, de->name);
-    newbuf[len + strlen(de->name)] = 0;
+    if(!match(parts[idx], namebuf)) continue;
+
+    strcpy(newbuf + len, namebuf); // append the name to the end of the current directory
+    newbuf[len + strlen(namebuf)] = 0; // add null terminator to signal that it's the end of the path
 
     search(idx+1, n, newbuf, de, st, parts);
   }
@@ -128,6 +153,8 @@ void ls_wildcard(char *path)
   int n = 0;
   struct dirent* de = (struct dirent*)malloc(sizeof(struct dirent));
   struct stat* st = (struct stat*)malloc(sizeof(struct stat));
+  for(int i = 0; i < DIRSIZ; i++)
+    de->name[i] = 0; // fill with null terminators, so when file name is read, there is a terminator in the right position
 
   // Split path into components
   char *s = path;
