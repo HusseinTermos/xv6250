@@ -101,8 +101,7 @@ int sys_set_info(void){
   if (info_len < 0) info_len = 0;
   if (info_len > MAX_INFO_SIZE) info_len = MAX_INFO_SIZE;
 
-  set_info(new_info, info_len);
-
+  return set_info(new_info, info_len);
 }
 
 int

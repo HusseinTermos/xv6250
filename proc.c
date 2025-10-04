@@ -337,7 +337,7 @@ info_wait(char* info_buf, int buf_len, int* num_copied)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
-        int n = buf_len > curproc->info_len ? curproc->info_len : buf_len;
+        int n = buf_len > p->info_len ? p->info_len : buf_len;
         memmove(info_buf,
           p->info, n);
         *num_copied = n;

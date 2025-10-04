@@ -1,5 +1,7 @@
-// infodemo.c — demo of set_info / info_wait on xv6 (x86)
-// Build: add _infodemo to UPROGS in Makefile, then `make qemu`
+// infodemo.c — demo for set_info / info_wait in xv6 (x86)
+
+// Build: add _infodemo to UPROGS in the Makefile, then `make qemu`
+// UPROGS=… _infodemo\
 
 #include "types.h"
 #include "stat.h"
@@ -15,24 +17,14 @@ main(void)
   }
 
   if(pid == 0){
+
     // --- CHILD ---
-    // Compose any bytes you like (string, TLV, struct-as-bytes, etc.)
-    char payload[128];
-    int n = 0;
-
-    // simple example: a tiny message with an integer
-    n += snprintf(payload + n, sizeof(payload) - n, "status=%d;", 7);
-    n += snprintf(payload + n, sizeof(payload) - n, "msg=%s", "bye parent");
-
-    if(n < 0) n = 0;
-    if(n > (int)sizeof(payload)) n = sizeof(payload);
-
-    // Stash into kernel (truncation is handled in the syscall if needed)
-    int stored = set_info(payload, n);
-    if(stored < 0)
+    char payload[] = "Hello from child!";
+    int len = sizeof(payload); // includes terminating '\0'
+    int x;
+    if(((x = set_info(payload, len)) < 0))
       printf(1, "child: set_info failed\n");
-
-    exit(); // child done
+    exit();
   }
 
   // --- PARENT ---
@@ -45,11 +37,11 @@ main(void)
     exit();
   }
 
-  // Ensure printable (null-terminate for printf if it's textual)
-  if(got < 0) got = 0;
+  // Ensure string termination
+  if(got <= 0) got = 0;
   if(got >= (int)sizeof(buf)) got = sizeof(buf) - 1;
   buf[got] = 0;
 
-  printf(1, "parent: reaped child %d, got %d byte(s): \"%s\"\n", cpid, got, buf);
+  printf(1, "parent: reaped child %d, got %d bytes: \"%s\"\n", cpid, got, buf);
   exit();
 }
