@@ -183,6 +183,7 @@ UPROGS=\
 	_zombie\
 	_login\
 	_testing_info\
+	_change_credentials\
 
 fs.img: mkfs README credentials.txt $(UPROGS)
 	./mkfs fs.img README credentials.txt $(UPROGS)

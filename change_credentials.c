@@ -14,6 +14,10 @@ unsigned int djb2(const char *str) {
 
 int main(int argc, char *argv[])
 {
+  if (argc != 5) {
+    printf(1, "Usage: change_credentials CUR_USERNAME CUR_PASSWORD NEW_USERNAME NEW_PASSWORD");
+    exit();
+  }
   char true_username_buf[128];
   char true_password_buf[128];
   int credentials_file = open("credentials.txt", O_RDONLY);
@@ -30,30 +34,13 @@ int main(int argc, char *argv[])
   true_password_buf[len_pass-1] = '\0';
   unsigned int true_username_hash = atoi(true_username_buf);
   unsigned int true_password_hash = atoi(true_password_buf);
-
-  char username_buf[128];
-  char password_buf[128];
-  while (1) {
-
-    int username_len = 0;
-    while (username_len == 0) {
-      printf(1, "Username: ");
-      username_len = gets_fd(0, username_buf, sizeof(username_buf) - 1);
-    }
-    username_buf[username_len-1] = '\0';
-    
-    int password_len = 0;
-    while (password_len == 0) {
-      printf(1, "Password: ");
-      password_len = gets_fd(0, password_buf, sizeof(password_buf) - 1);
-    }
-    password_buf[password_len-1] = '\0';
-    
-    if (djb2(username_buf) == true_username_hash &&
-        djb2(password_buf) == true_password_hash) {
-          printf(1, "Welcome, %s!\n", username_buf);
-          exec("sh", argv);
-    }
-    printf(1, "Incorrect credentials.\n");
+  
+  if(!(djb2(argv[1]) == true_username_hash && djb2(argv[2]) == true_password_hash)) {
+    printf(1, "Incorrect current credentials.");
+    exit();
   }
+  credentials_file = open("credentials.txt", O_WRONLY);
+  printf(credentials_file, "%d\n%d\n", djb2(argv[3]), djb2(argv[4]));
+  printf(1, "Successfully updated username and password\n");
+  exit();
 }
