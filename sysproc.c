@@ -90,6 +90,32 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_test(void){
-  return 67;
+int sys_set_info(void){
+  char* new_info;
+  int info_len;
+  int s = argptr(0, &new_info, 0);
+  if (s < 0) return -1;
+  s = argint(1, &info_len);
+  if (s < 0) return -1;
+
+  if (info_len < 0) info_len = 0;
+  if (info_len > MAX_INFO_SIZE) info_len = MAX_INFO_SIZE;
+
+  set_info(new_info, info_len);
+
+}
+
+int
+sys_info_wait(void)
+{
+  char* info_buf;
+  int buf_len;
+  int *out;
+
+  if(argptr(0, &info_buf, 0) < 0) return -1;
+  if(argint(1, &buf_len)  < 0) return -1;
+  if(argptr(2, (char**)&out, sizeof(int)) < 0) return -1;
+  
+  return info_wait(info_buf, buf_len, out);
+
 }

@@ -2,7 +2,7 @@
 #include "stat.h"
 #include "user.h"
 #include "fs.h"
-
+#define NULL 0
 int count_stars(char* s) {
   int count = 0, n = strlen(s);
   for(int i = 0; i < n; ++i)
