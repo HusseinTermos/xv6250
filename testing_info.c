@@ -1,8 +1,3 @@
-// infodemo.c — demo for set_info / info_wait in xv6 (x86)
-
-// Build: add _infodemo to UPROGS in the Makefile, then `make qemu`
-// UPROGS=… _infodemo\
-
 #include "types.h"
 #include "stat.h"
 #include "user.h"
@@ -11,37 +6,24 @@ int
 main(void)
 {
   int pid = fork();
-  if(pid < 0){
+
+  if (pid < 0) {
     printf(1, "fork failed\n");
-    exit();
   }
 
-  if(pid == 0){
-
-    // --- CHILD ---
-    char payload[] = "Hello from child!";
-    int len = sizeof(payload); // includes terminating '\0'
-    int x;
-    if(((x = set_info(payload, len)) < 0))
-      printf(1, "child: set_info failed\n");
+  if (pid == 0) { // Child
+    char info[] = "We can store anything here; not necessarily characters.";
+    int info_len = sizeof(info);
+    set_info(info, info_len);
     exit();
   }
+  else { // Parent
+    char info_buf[128];
+    int info_len;
 
-  // --- PARENT ---
-  char buf[128];
-  int got = 0;
-
-  int cpid = info_wait(buf, sizeof(buf), &got);
-  if(cpid < 0){
-    printf(1, "parent: info_wait failed\n");
+    int cpid = info_wait(info_buf, 128, &info_len);
+    info_buf[info_len] = '\0';
+    printf(1, "Length of Received Message: %d\nReceived Message: %s\n", info_len, info_buf);
     exit();
   }
-
-  // Ensure string termination
-  if(got <= 0) got = 0;
-  if(got >= (int)sizeof(buf)) got = sizeof(buf) - 1;
-  buf[got] = 0;
-
-  printf(1, "parent: reaped child %d, got %d bytes: \"%s\"\n", cpid, got, buf);
-  exit();
 }
