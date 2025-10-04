@@ -15,7 +15,7 @@ unsigned int djb2(const char *str) {
 int main(int argc, char *argv[])
 {
   if (argc != 5) {
-    printf(1, "Usage: change_credentials CUR_USERNAME CUR_PASSWORD NEW_USERNAME NEW_PASSWORD");
+    printf(1, "Usage: change_credentials CUR_USERNAME CUR_PASSWORD NEW_USERNAME NEW_PASSWORD\n");
     exit();
   }
   char true_username_buf[128];
