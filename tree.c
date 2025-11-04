@@ -14,7 +14,7 @@ void search(int depth, char *curr_path, struct dirent* de, struct stat* st) {
     }
     int len = strlen(curr_path), s;
     for(s = len - 1; s >= 0 && curr_path[s] != '/'; --s); // find start of last element
-    printf(1, curr_path + s + 1);
+    printf(1, "%s\n", curr_path + s + 1);
 
     if((fd = open(curr_path, 0)) < 0) return;
     if(fstat(fd, st) < 0) { close(fd); return; }
