@@ -11,7 +11,12 @@
 #define LIST  4
 #define BACK  5
 
+#define MAX_HIST 10
+#define BUF_SIZE 100
+
 #define MAXARGS 10
+
+char history[MAX_HIST+1][BUF_SIZE];
 
 struct cmd {
   int type;
@@ -141,10 +146,25 @@ getcmd(char *buf, int nbuf)
   return 0;
 }
 
+
+void add_to_history(char* buf, int* in) {
+  strcpy(history[*in], buf);
+  *in = (*in + 1) % MAX_HIST;
+}
+
+void print_history(int in) {
+  int s = in;
+  for (int i = 0; i < MAX_HIST; i++) {
+    printf(0, "%s", history[s]);
+    s = (s + 1) % MAX_HIST;
+  }
+}
+
 int
 main(void)
 {
-  static char buf[100];
+  int in = 0;
+  static char buf[BUF_SIZE];
   int fd;
 
   // Ensure that three file descriptors are open.
@@ -157,6 +177,7 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+    add_to_history(buf, &in);
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
@@ -164,8 +185,17 @@ main(void)
         printf(2, "cannot cd %s\n", buf+3);
       continue;
     }
-    if(fork1() == 0)
-      runcmd(parsecmd(buf));
+
+    if (!strcmp(buf, "history\n")) {
+      if(fork1() == 0) {
+        print_history(in);
+        exit();
+      }
+    }
+    else {
+      if(fork1() == 0)
+        runcmd(parsecmd(buf));
+    }
     wait();
   }
   exit();
