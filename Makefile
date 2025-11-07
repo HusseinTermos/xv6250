@@ -187,8 +187,8 @@ UPROGS=\
 	_diff\
 	_tree\
 
-fs.img: mkfs README credentials.txt $(UPROGS)
-	./mkfs fs.img README credentials.txt $(UPROGS)
+fs.img: mkfs README credentials.txt o.txt o2.txt $(UPROGS)
+	./mkfs fs.img README credentials.txt o.txt o2.txt $(UPROGS)
 
 -include *.d
 
