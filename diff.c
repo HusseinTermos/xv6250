@@ -3,7 +3,7 @@
 #include "fcntl.h"
 #include "user.h"
 
-#define MAX_LINE_LEN 10
+#define MAX_LINE_LEN 50
 #define MAX_LINES 10
   
 int main(int argc, char *argv[])
@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
   int f1_len = 0, f2_len = 0;
   while (f1_len < MAX_LINES && gets_fd(f1, f1_data[f1_len], MAX_LINE_LEN)) f1_len++;
   while (f2_len < MAX_LINES && gets_fd(f2, f2_data[f2_len], MAX_LINE_LEN)) f2_len++;
-  
   close(f1); close(f2);
   int dp[MAX_LINES][MAX_LINES];
   dp[0][0] = !strcmp(f1_data[0], f2_data[0]) ? 1 : 0;
@@ -84,6 +83,7 @@ int main(int argc, char *argv[])
       printf(1, "+ %s", f2_data[j]);
     }
   }
+  printf(1, "\n");
 
   exit();
 

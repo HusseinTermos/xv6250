@@ -2,6 +2,7 @@
 #include "stat.h"
 #include "user.h"
 
+
 int main() {
     int x = 0;
     int y = 0;
