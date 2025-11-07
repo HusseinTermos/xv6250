@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int info_wait(char*, int, int*);
 int set_info(char*, unsigned int);
+int clone(void(*fun)(void*), void *arg, void *stack);
 
 // ulib.c
 int stat(const char*, struct stat*);

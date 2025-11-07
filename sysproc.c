@@ -118,3 +118,14 @@ sys_info_wait(void)
   return info_wait(info_buf, buf_len, out);
 
 }
+
+int sys_clone(void)
+{
+  void *fun, *arg, *stack;
+
+  if (argptr(0, (void*)&fun, sizeof(*fun)) < 0) return -1;
+  if (argptr(1, (void*)&arg, sizeof(*arg)) < 0) return -1;
+  if (argptr(2, (void*)&stack, sizeof(*stack)) < 0) return -1;
+  
+  return clone(fun, arg, stack);
+}
