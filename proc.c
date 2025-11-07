@@ -222,59 +222,46 @@ fork(void)
   return pid;
 }
 
-// Create a new kernel thread
 
 int clone(void (*fcn)(void*), void *arg, void *stack)
-  {
+{
   int i;
   struct proc *thread;
   struct proc *curproc = myproc();
   
-  // check if we have less than one memory page or stack is not alligned
   if ((curproc->sz - (uint) stack) < PGSIZE || ((uint) stack % PGSIZE) != 0)
     return -1;
 
-  if ((thread = allocproc()) == 0) // thread wasn't allocated successfully
+  if ((thread = allocproc()) == 0)
     return -1;
 
-  // Sharing the address space
   thread->pgdir = curproc->pgdir;
-  thread->sz = curproc->sz; // Recording the size of process memory in bytes
-  thread->parent = curproc; // Recording the parent process
+  thread->sz = curproc->sz;
+  thread->parent = curproc;
   *thread->tf = *curproc->tf;
 
-  // stack parameters
   uint user_stack[2];
-  user_stack[0] = 0xffffffff; // where stack once it starts
-  user_stack[1] = (uint) arg; // the the argument passed to
+  user_stack[0] = 0xffffffff;
+  user_stack[1] = (uint) arg;
   
-  // set top of the stack to the allocated page (stack is actually the bottom of the page) and 
-  // subtract 8 bytes from the stack top to make space for the two values being saved
   uint stack_top = (uint) stack + PGSIZE - 8;
   
-  // copy user stack values
   if (copyout(thread->pgdir, stack_top, user_stack, 8) < 0)
     return -1;
 
   thread->tf->ebp = (uint) stack_top;
   thread->tf->esp = (uint) stack_top;
-  // set instruction pointer to address of function
   thread->tf->eip = (uint) fcn;
-  // Clear %eax so that clone returns 0 in the child thread.
   thread->tf->eax = 0;
 
-  // copying ppened files
   for (i = 0; i < NOFILE; i++)
     if (curproc->ofile[i])
       thread->ofile[i] = filedup(curproc->ofile[i]);
 
-  // copying current working directory
   thread->cwd = idup(curproc->cwd);
 
-  // copying name
   safestrcpy(thread->name, curproc->name, sizeof(curproc->name));
 
-  // running thread
   acquire(&ptable.lock);
   thread->state = RUNNABLE;
   release(&ptable.lock);

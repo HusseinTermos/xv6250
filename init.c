@@ -18,17 +18,31 @@ main(void)
   }
   dup(0);  // stdout
   dup(0);  // stderr
+  int logged_in = 0;
   for(;;){
-    printf(1, "init: starting login\n");
+    
+    if (logged_in) {
+      printf(1, "init: starting login\n");
+    }
+    else {
+      printf(1, "init: starting sh\n");
+    }
     pid = fork();
     if(pid < 0){
       printf(1, "init: fork failed\n");
       exit();
     }
     if(pid == 0){
-      exec("login", argv);
-      printf(1, "init: exec login failed\n");
-      exit();
+      if (!logged_in) {
+        exec("login", argv);
+        printf(1, "init: exec login failed\n");
+        exit();
+      }
+      else  {
+        exec("sh", argv);
+        printf(1, "init: exec sh failed\n");
+        exit();
+      }
     }
     while((wpid=wait()) >= 0 && wpid != pid)
       printf(1, "zombie!\n");

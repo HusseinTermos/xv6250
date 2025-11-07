@@ -186,9 +186,10 @@ UPROGS=\
 	_change_credentials\
 	_diff\
 	_tree\
+	_clonetest\
 
-fs.img: mkfs README credentials.txt o.txt o2.txt $(UPROGS)
-	./mkfs fs.img README credentials.txt o.txt o2.txt $(UPROGS)
+fs.img: mkfs README credentials.txt file1.c file2.c $(UPROGS)
+	./mkfs fs.img README credentials.txt file1.c file2.c $(UPROGS)
 
 -include *.d
 
@@ -255,7 +256,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
-	testing_info.c login.c diff.c tree.c\
+	testing_info.c login.c diff.c tree.c clonetest.c\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
