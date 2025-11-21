@@ -113,6 +113,8 @@ found:
   p->context->eip = (uint)forkret;
 
   p->info_len = 0;
+  p->queue = Q_HIGH;
+  p->ticks_used = 0;
   return p;
 }
 
@@ -425,6 +427,36 @@ info_wait(char* info_buf, int buf_len, int* num_copied)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
+void scheduler (void) {
+  struct proc* p;
+  while (1) {
+    sti();
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state != RUNNABLE || p->queue != Q_HIGH)
+        continue
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+  
+      swtch(&c->scheduler, p->context);
+  
+      switchkvm();
+      c->proc = 0;
+    }
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state != RUNNABLE || p->queue != Q_LOW)
+        continue
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+  
+      swtch(&c->scheduler, p->context);
+  
+      switchkvm();
+      c->proc = 0;
+    }
+  }
+}
 void
 scheduler(void)
 {

@@ -40,7 +40,7 @@ int match(char *pattern, char *s) { // Assumes no consecutive *'s
   }
   if(m == 1) return 1; // pattern is '*'
   // don't count empty string as a part
-  int num_parts = stars;
+  int num_parts = stars + 1;
   if(pattern[0] == '*') num_parts--;
   if(pattern[m - 1] == '*') num_parts--;
   char** parts = (char**)malloc(num_parts * sizeof(char *));

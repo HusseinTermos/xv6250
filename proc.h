@@ -35,7 +35,7 @@ struct context {
 };
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
-
+enum procqueue {Q_HIGH = 0, Q_LOW = 1};
 // Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
@@ -53,6 +53,8 @@ struct proc {
   char name[16];               // Process name (debugging)
   char info[MAX_INFO_SIZE];
   unsigned int info_len;
+  enum procqueue queue;
+  int ticks_used;
 };
 
 // Process memory is laid out contiguously, low addresses first:
