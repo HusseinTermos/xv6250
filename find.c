@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 {
     // Start recursion from first part
     if(argc != 2) {
-        printf(1, "Use: find <pattern>\n");
+        printf(1, "Use: %s pattern\n", argv[0]);
         exit();
     }
     char* pattern = argv[1];
