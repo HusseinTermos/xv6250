@@ -189,6 +189,7 @@ UPROGS=\
 	_clonetest\
 	_find\
 	_find_keyword\
+	_split\
 
 fs.img: mkfs README credentials.txt file1.c file2.c $(UPROGS)
 	./mkfs fs.img README credentials.txt file1.c file2.c $(UPROGS)
