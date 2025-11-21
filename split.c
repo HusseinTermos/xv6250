@@ -18,7 +18,6 @@ int main(int argc, char* argv[]) {
 
   char file_name[MAX_FILE_NAME];
   memset(file_name, 0, sizeof(file_name));
-  printf(1, "GOT HERE\n");
 
   int size_per_sub_file = atoi(argv[2]);
 
