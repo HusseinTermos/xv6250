@@ -190,8 +190,8 @@ UPROGS=\
 	_find_keyword\
 	_split\
 
-fs.img: mkfs README credentials.txt file1.c file2.c $(UPROGS)
-	./mkfs fs.img README credentials.txt file1.c file2.c $(UPROGS)
+fs.img: mkfs README test_find_keyword.txt file1.c file2.c $(UPROGS)
+	./mkfs fs.img README test_find_keyword.txt file1.c file2.c $(UPROGS)
 
 -include *.d
 

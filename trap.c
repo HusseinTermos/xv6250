@@ -8,6 +8,9 @@
 #include "traps.h"
 #include "spinlock.h"
 
+#define Q_HIGH_TICKS 4
+#define Q_LOW_TICKS 8
+
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
@@ -49,11 +52,25 @@ trap(struct trapframe *tf)
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
-      acquire(&tickslock);
       ticks++;
       wakeup(&ticks);
-      release(&tickslock);
     }
+
+    struct proc *cp = myproc();
+    if(cp != 0 && cp->state == RUNNING){
+      cp->ticks_used++;
+
+      if(cp->queue == Q_HIGH && cp->ticks_used >= Q_HIGH_TICKS){
+        cp->queue = Q_LOW;
+        cp->ticks_used = 0;
+        yield();
+      }
+      else if(cp->queue == Q_LOW && cp->ticks_used >= Q_LOW_TICKS){
+        cp->ticks_used = 0;
+        yield();
+      }
+    }
+
     lapiceoi();
     break;
   case T_IRQ0 + IRQ_IDE:

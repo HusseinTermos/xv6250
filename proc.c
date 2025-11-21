@@ -427,71 +427,39 @@ info_wait(char* info_buf, int buf_len, int* num_copied)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
-void scheduler (void) {
-  struct proc* p;
-  while (1) {
-    sti();
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-      if (p->state != RUNNABLE || p->queue != Q_HIGH)
-        continue
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-  
-      swtch(&c->scheduler, p->context);
-  
-      switchkvm();
-      c->proc = 0;
-    }
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-      if (p->state != RUNNABLE || p->queue != Q_LOW)
-        continue
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-  
-      swtch(&c->scheduler, p->context);
-  
-      switchkvm();
-      c->proc = 0;
-    }
-  }
-}
 void
 scheduler(void)
 {
-  struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+
   for(;;){
-    // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    // pick a RUNNABLE process, preferring high queue then low queue
+    struct proc *p = 0;
+    for(struct proc *q = ptable.proc; q < &ptable.proc[NPROC]; q++){
+      if(q->state == RUNNABLE && q->queue == Q_HIGH){ p = q; break; }
+    }
+    if(p == 0){
+      for(struct proc *q = ptable.proc; q < &ptable.proc[NPROC]; q++){
+        if(q->state == RUNNABLE && q->queue == Q_LOW){ p = q; break; }
+      }
+    }
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
+    if(p){
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
+      swtch(&c->scheduler, p->context);
       switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
       c->proc = 0;
     }
     release(&ptable.lock);
-
   }
 }
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -575,6 +543,7 @@ sleep(void *chan, struct spinlock *lk)
   }
   // Go to sleep.
   p->chan = chan;
+  p->ticks_used = 0;
   p->state = SLEEPING;
 
   sched();

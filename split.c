@@ -3,8 +3,8 @@
 #include "fcntl.h"
 #include "user.h"
 
-#define BUF_SZ 10
-#define MAX_FILE_NAME 10
+#define BUF_SZ 100
+#define MAX_FILE_NAME 100
 
 int ceildiv(int x, int y) {
   return (x + y - 1) / y;
